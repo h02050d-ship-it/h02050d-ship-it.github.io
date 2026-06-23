@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>林材木店 Webツール一覧</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<style>
+  :root{
+    --bg:#f4f5f3; --card:#ffffff; --ink:#1f2421; --muted:#6b7280; --hint:#9aa0a6;
+    --line:#e3e6e1; --accent:#1D9E75; --accent2:#378ADD;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    line-height:1.6; -webkit-text-size-adjust:100%;}
+  .wrap{max-width:920px; margin:0 auto; padding:28px 16px 64px;}
+  header{margin-bottom:22px;}
+  header h1{font-size:22px; font-weight:600; margin:0 0 4px; display:flex; align-items:center; gap:10px;}
+  header p{margin:0; font-size:13px; color:var(--hint);}
+  .count{font-size:12px; color:var(--muted); margin-top:8px;}
+  .cat{margin:24px 0 10px; font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.02em;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px;}
+  .tool{display:flex; gap:12px; align-items:flex-start; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:14px 16px; text-decoration:none; color:inherit; transition:border-color .12s, transform .12s, background .12s;}
+  .tool:hover{border-color:var(--accent); background:#fafdfb; transform:translateY(-1px);}
+  .ic{font-size:26px; line-height:1; flex:none; width:34px; text-align:center;}
+  .body{min-width:0; flex:1;}
+  .ttl{font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px;}
+  .ttl .ext{font-size:12px; color:var(--hint);}
+  .desc{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .url{font-size:11px; color:var(--hint); margin-top:6px; word-break:break-all;}
+  .ext-badge{font-size:10px; color:var(--accent2); border:1px solid var(--accent2); border-radius:999px; padding:0 6px; margin-left:4px;}
+  footer{margin-top:36px; font-size:11px; color:var(--hint); text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧰 林材木店 Webツール一覧</h1>
+    <p>これまでに開発した社内Webツール。カードをクリックすると各サイトが開きます。</p>
+    <div class="count" id="count"></div>
+  </header>
+  <div id="root"></div>
+  <footer>h02050d-ship-it.github.io ｜ 最終更新 2026-06-23</footer>
+</div>
+
+<script>
+const DATA = [
+  { cat:"業務・書類管理", tools:[
+    { ic:"✅", t:"林材木店 タスク管理", d:"会社全体のタスクを一覧・管理", u:"https://h02050d-ship-it.github.io/task-manager/" },
+    { ic:"📑", t:"書類自動保存ステータスボード", d:"請求書・精算書・納品書の自動DL状況を取引先ごとに可視化", u:"https://h02050d-ship-it.github.io/doc-board/" }
+  ]},
+  { cat:"自動化・通知", tools:[
+    { ic:"📣", t:"現場呼出", d:"加工場へワンタップでLINE通知", u:"https://h02050d-ship-it.github.io/genba-call/" },
+    { ic:"🧾", t:"納品書作成", d:"納品書をかんたん作成", u:"https://h02050d-ship-it.github.io/nouhinsho/" }
+  ]},
+  { cat:"計算・見積", tools:[
+    { ic:"🚚", t:"運賃自動計算ツール", d:"西濃運輸の送料を地域・サイズから自動計算", u:"https://h02050d-ship-it.github.io/fare-calculator/" },
+    { ic:"📄", t:"見積書作成", d:"商品＋送料でA4見積書を作成", u:"https://h02050d-ship-it.github.io/fare-calculator/mitsumori.html" }
+  ]},
+  { cat:"製造・現場", tools:[
+    { ic:"⚙️", t:"モルダー軸位置管理", d:"モルダーの軸位置を記録・管理", u:"https://h02050d-ship-it.github.io/molder/" },
+    { ic:"🔪", t:"モルダー刃物 使用量管理", d:"刃物の使用量を管理", u:"https://h02050d-ship-it.github.io/molder-hamono/" },
+    { ic:"📅", t:"加工予定表", d:"工場の加工予定を管理", u:"https://h02050d-ship-it.github.io/kakou-yotei/" }
+  ]},
+  { cat:"サイト", tools:[
+    { ic:"🌲", t:"林材木店 公式サイト", d:"無垢桧フローリング・羽目板専門サイト", u:"https://hayazai.com", ext:true },
+    { ic:"🏨", t:"川路ホテル", d:"KAWAJI HOTEL サイト", u:"https://h02050d-ship-it.github.io/kawaji-hotel/" }
+  ]}
+];
+
+const root = document.getElementById("root");
+let n = 0;
+DATA.forEach(g=>{
+  const h = document.createElement("div"); h.className="cat"; h.textContent = g.cat;
+  root.appendChild(h);
+  const grid = document.createElement("div"); grid.className="grid";
+  g.tools.forEach(t=>{
+    n++;
+    const a = document.createElement("a"); a.className="tool"; a.href=t.u; a.target="_blank"; a.rel="noopener";
+    const ext = t.ext ? '<span class="ext-badge">外部</span>' : '';
+    a.innerHTML =
+      '<div class="ic">'+t.ic+'</div>'+
+      '<div class="body">'+
+        '<div class="ttl">'+t.t+ext+'<span class="ext">↗</span></div>'+
+        '<div class="desc">'+t.d+'</div>'+
+        '<div class="url">'+t.u.replace(/^https:\/\//,'')+'</div>'+
+      '</div>';
+    grid.appendChild(a);
+  });
+  root.appendChild(grid);
+});
+document.getElementById("count").textContent = "全 "+n+" 件";
+</script>
+</body>
+</html>
