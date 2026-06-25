@@ -9,16 +9,23 @@
   :root{
     --bg:#f4f5f3; --card:#ffffff; --ink:#1f2421; --muted:#6b7280; --hint:#9aa0a6;
     --line:#e3e6e1; --accent:#1D9E75; --accent2:#378ADD;
+    --done:#1D9E75; --done-bg:#e8f6ef; --wip:#C77A12; --wip-bg:#fbf1e2;
   }
   *{box-sizing:border-box}
   body{margin:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
     line-height:1.6; -webkit-text-size-adjust:100%;}
   .wrap{max-width:920px; margin:0 auto; padding:28px 16px 64px;}
-  header{margin-bottom:22px;}
+  header{margin-bottom:18px;}
   header h1{font-size:22px; font-weight:600; margin:0 0 4px; display:flex; align-items:center; gap:10px;}
   header p{margin:0; font-size:13px; color:var(--hint);}
-  .count{font-size:12px; color:var(--muted); margin-top:8px;}
+  .filters{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px;}
+  .chip{font-size:13px; font-weight:600; color:var(--muted); background:var(--card); border:1px solid var(--line);
+    border-radius:999px; padding:5px 14px; cursor:pointer; transition:all .12s; display:inline-flex; align-items:center; gap:5px;}
+  .chip:hover{border-color:var(--accent);}
+  .chip.active{color:#fff; background:var(--ink); border-color:var(--ink);}
+  .chip .n{font-size:11px; opacity:.7;}
+  .count{font-size:12px; color:var(--muted); margin-top:10px;}
   .cat{margin:24px 0 10px; font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.02em;}
   .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px;}
   .tool{display:flex; gap:12px; align-items:flex-start; background:var(--card); border:1px solid var(--line);
@@ -26,11 +33,15 @@
   .tool:hover{border-color:var(--accent); background:#fafdfb; transform:translateY(-1px);}
   .ic{font-size:26px; line-height:1; flex:none; width:34px; text-align:center;}
   .body{min-width:0; flex:1;}
-  .ttl{font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px;}
+  .ttl{font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .ttl .ext{font-size:12px; color:var(--hint);}
   .desc{font-size:12.5px; color:var(--muted); margin-top:2px;}
   .url{font-size:11px; color:var(--hint); margin-top:6px; word-break:break-all;}
-  .ext-badge{font-size:10px; color:var(--accent2); border:1px solid var(--accent2); border-radius:999px; padding:0 6px; margin-left:4px;}
+  .ext-badge{font-size:10px; color:var(--accent2); border:1px solid var(--accent2); border-radius:999px; padding:0 6px;}
+  .st{font-size:10px; font-weight:700; border-radius:999px; padding:1px 8px; line-height:1.5; white-space:nowrap;}
+  .st.done{color:var(--done); background:var(--done-bg);}
+  .st.wip{color:var(--wip); background:var(--wip-bg);}
+  .hide{display:none !important;}
   footer{margin-top:36px; font-size:11px; color:var(--hint); text-align:center;}
 </style>
 </head>
@@ -38,60 +49,96 @@
 <div class="wrap">
   <header>
     <h1>🧰 林材木店 Webツール一覧</h1>
-    <p>これまでに開発した社内Webツール。カードをクリックすると各サイトが開きます。</p>
+    <p>社内Webツール。<b>ある程度完成</b>したものと<b>開発中</b>のものを両方掲載しています。カードをクリックで各サイトが開きます。</p>
+    <div class="filters" id="filters"></div>
     <div class="count" id="count"></div>
   </header>
   <div id="root"></div>
-  <footer>h02050d-ship-it.github.io ｜ 最終更新 2026-06-24</footer>
+  <footer>h02050d-ship-it.github.io ｜ 最終更新 2026-06-25</footer>
 </div>
 
 <script>
+// s: "done" = ある程度完成 / "wip" = 開発中
 const DATA = [
   { cat:"業務・書類管理", tools:[
-    { ic:"📊", t:"売れ行き＆在庫ボード", d:"EC在庫の売れ行きヒートマップ＋在庫/価格編集（スプシ連動・要ログイン）", u:"https://h02050d-ship-it.github.io/salesboard/" },
-    { ic:"✅", t:"林材木店 タスク管理", d:"会社全体のタスクを一覧・管理", u:"https://h02050d-ship-it.github.io/task-manager/" },
-    { ic:"📑", t:"書類自動保存ステータスボード", d:"請求書・精算書・納品書の自動DL状況を取引先ごとに可視化", u:"https://h02050d-ship-it.github.io/doc-board/" }
+    { ic:"📊", t:"売れ行き＆在庫ボード", d:"EC在庫の売れ行きヒートマップ＋在庫/価格編集（スプシ連動・要ログイン）", u:"https://h02050d-ship-it.github.io/salesboard/", s:"done" },
+    { ic:"✅", t:"林材木店 タスク管理", d:"会社全体のタスクを一覧・管理", u:"https://h02050d-ship-it.github.io/task-manager/", s:"done" },
+    { ic:"📑", t:"書類自動保存ステータスボード", d:"請求書・精算書・納品書の自動DL状況を取引先ごとに可視化", u:"https://h02050d-ship-it.github.io/doc-board/", s:"wip" }
   ]},
   { cat:"自動化・通知", tools:[
-    { ic:"📣", t:"現場呼出", d:"加工場へワンタップでLINE通知", u:"https://h02050d-ship-it.github.io/genba-call/" },
-    { ic:"🧾", t:"納品書作成", d:"納品書をかんたん作成", u:"https://h02050d-ship-it.github.io/nouhinsho/" }
+    { ic:"📣", t:"現場呼出", d:"加工場へワンタップでLINE通知", u:"https://h02050d-ship-it.github.io/genba-call/", s:"wip" },
+    { ic:"🧾", t:"納品書作成", d:"納品書をかんたん作成", u:"https://h02050d-ship-it.github.io/nouhinsho/", s:"wip" }
   ]},
   { cat:"計算・見積", tools:[
-    { ic:"🚚", t:"運賃自動計算ツール", d:"西濃運輸の送料を地域・サイズから自動計算", u:"https://h02050d-ship-it.github.io/fare-calculator/" },
-    { ic:"📄", t:"見積書作成", d:"商品＋送料でA4見積書を作成", u:"https://h02050d-ship-it.github.io/fare-calculator/mitsumori.html" }
+    { ic:"🚚", t:"運賃自動計算ツール", d:"西濃運輸の送料を地域・サイズから自動計算", u:"https://h02050d-ship-it.github.io/fare-calculator/", s:"done" },
+    { ic:"📄", t:"見積書作成", d:"商品＋送料でA4見積書を作成", u:"https://h02050d-ship-it.github.io/fare-calculator/mitsumori.html", s:"done" }
   ]},
   { cat:"製造・現場", tools:[
-    { ic:"⚙️", t:"モルダー軸位置管理", d:"モルダーの軸位置を記録・管理", u:"https://h02050d-ship-it.github.io/molder/" },
-    { ic:"🔪", t:"モルダー刃物 使用量管理", d:"刃物の使用量を管理", u:"https://h02050d-ship-it.github.io/molder-hamono/" },
-    { ic:"📅", t:"加工予定表", d:"工場の加工予定を管理", u:"https://h02050d-ship-it.github.io/kakou-yotei/" }
+    { ic:"⚙️", t:"モルダー軸位置管理", d:"モルダーの軸位置を記録・管理", u:"https://h02050d-ship-it.github.io/molder/", s:"wip" },
+    { ic:"🔪", t:"モルダー刃物 使用量管理", d:"刃物の使用量を管理", u:"https://h02050d-ship-it.github.io/molder-hamono/", s:"wip" },
+    { ic:"📅", t:"加工予定表", d:"工場の加工予定を管理", u:"https://h02050d-ship-it.github.io/kakou-yotei/", s:"wip" }
   ]},
   { cat:"サイト", tools:[
-    { ic:"🌲", t:"林材木店 公式サイト", d:"無垢桧フローリング・羽目板専門サイト", u:"https://hayazai.com", ext:true }
+    { ic:"🌲", t:"林材木店 公式サイト", d:"無垢桧フローリング・羽目板専門サイト", u:"https://hayazai.com", ext:true, s:"done" }
   ]}
 ];
 
+const ST = { done:{label:"ある程度完成", cls:"done"}, wip:{label:"開発中", cls:"wip"} };
 const root = document.getElementById("root");
-let n = 0;
-DATA.forEach(g=>{
-  const h = document.createElement("div"); h.className="cat"; h.textContent = g.cat;
-  root.appendChild(h);
-  const grid = document.createElement("div"); grid.className="grid";
-  g.tools.forEach(t=>{
-    n++;
-    const a = document.createElement("a"); a.className="tool"; a.href=t.u; a.target="_blank"; a.rel="noopener";
-    const ext = t.ext ? '<span class="ext-badge">外部</span>' : '';
-    a.innerHTML =
-      '<div class="ic">'+t.ic+'</div>'+
-      '<div class="body">'+
-        '<div class="ttl">'+t.t+ext+'<span class="ext">↗</span></div>'+
-        '<div class="desc">'+t.d+'</div>'+
-        '<div class="url">'+t.u.replace(/^https:\/\//,'')+'</div>'+
-      '</div>';
-    grid.appendChild(a);
-  });
-  root.appendChild(grid);
+const all = DATA.flatMap(g=>g.tools);
+let filter = "all";
+
+// 件数
+const nDone = all.filter(t=>t.s==="done").length;
+const nWip  = all.filter(t=>t.s==="wip").length;
+
+// 絞り込みチップ
+const FILTERS = [
+  { key:"all",  label:"すべて",        n:all.length },
+  { key:"done", label:"✓ ある程度完成", n:nDone },
+  { key:"wip",  label:"🛠 開発中",      n:nWip }
+];
+const fbox = document.getElementById("filters");
+FILTERS.forEach(f=>{
+  const b = document.createElement("button");
+  b.className = "chip" + (f.key==="all" ? " active" : "");
+  b.dataset.key = f.key;
+  b.innerHTML = f.label + ' <span class="n">'+f.n+'</span>';
+  b.addEventListener("click", ()=>{ filter = f.key; render(); });
+  fbox.appendChild(b);
 });
-document.getElementById("count").textContent = "全 "+n+" 件";
+
+function render(){
+  // チップのactive更新
+  fbox.querySelectorAll(".chip").forEach(c=> c.classList.toggle("active", c.dataset.key===filter));
+  root.innerHTML = "";
+  let shown = 0;
+  DATA.forEach(g=>{
+    const visible = g.tools.filter(t=> filter==="all" || t.s===filter);
+    if(!visible.length) return;
+    const h = document.createElement("div"); h.className="cat"; h.textContent = g.cat;
+    root.appendChild(h);
+    const grid = document.createElement("div"); grid.className="grid";
+    visible.forEach(t=>{
+      shown++;
+      const a = document.createElement("a"); a.className="tool"; a.href=t.u; a.target="_blank"; a.rel="noopener";
+      const ext = t.ext ? '<span class="ext-badge">外部</span>' : '';
+      const st = ST[t.s] ? '<span class="st '+ST[t.s].cls+'">'+ST[t.s].label+'</span>' : '';
+      a.innerHTML =
+        '<div class="ic">'+t.ic+'</div>'+
+        '<div class="body">'+
+          '<div class="ttl">'+t.t+st+ext+'<span class="ext">↗</span></div>'+
+          '<div class="desc">'+t.d+'</div>'+
+          '<div class="url">'+t.u.replace(/^https:\/\//,'')+'</div>'+
+        '</div>';
+      grid.appendChild(a);
+    });
+    root.appendChild(grid);
+  });
+  document.getElementById("count").textContent =
+    "表示 "+shown+" 件（全 "+all.length+" 件 ｜ ある程度完成 "+nDone+" ・ 開発中 "+nWip+"）";
+}
+render();
 </script>
 </body>
 </html>
